@@ -11,7 +11,7 @@ Attribute VB_Exposed = False
 ' Module    : clsFuncs
 ' Author    : Dmitry Gorelenkov
 ' Date      : 05.2012
-' Changed   : 16.11.2013
+' Changed   : 07.06.2014
 ' Purpose   : Functionssammlung - Allgemein
 ' Hint      : LOW QUALITY CODE!!!
 '---------------------------------------------------------------------------------------
@@ -20,16 +20,16 @@ Attribute VB_Exposed = False
 Option Explicit
 
 'API showWindows, nCmdShow = 0 => ausblenden, = 1 => anzeigen
-Private Declare Function APIShowWindow Lib "user32" Alias "ShowWindow" (ByVal hWnd As Long, ByVal nCmdShow As Long) As Long
+Private Declare Function APIShowWindow Lib "User32" Alias "ShowWindow" (ByVal hwnd As Long, ByVal nCmdShow As Long) As Long
 Private Declare Sub APISleep Lib "kernel32" Alias "Sleep" (ByVal lngMilliseconds As Long)
-Private Declare Function APISetForegroundWindow Lib "user32" Alias "SetForegroundWindow" (ByVal hWnd As Long) As Long
-Private Declare Function APIGetActiveWindow Lib "user32" Alias "GetActiveWindow" () As Long
+Private Declare Function APISetForegroundWindow Lib "User32" Alias "SetForegroundWindow" (ByVal hwnd As Long) As Long
+Private Declare Function APIGetActiveWindow Lib "User32" Alias "GetActiveWindow" () As Long
 
-Private Declare Function SystemParametersInfo Lib "user32" Alias "SystemParametersInfoA" _
+Private Declare Function SystemParametersInfo Lib "User32" Alias "SystemParametersInfoA" _
 (ByVal uAction As Long, ByVal uParam As Long, ByRef lpvParam As Long, ByVal fuWinIni As Long) As Long
 
-Private Declare Function SetWindowPos Lib "user32" _
- (ByVal hWnd As Long, ByVal hWndInsertAfter As Long, _
+Private Declare Function SetWindowPos Lib "User32" _
+ (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, _
  ByVal x As Long, ByVal y As Long, _
  ByVal cx As Long, ByVal cy As Long, _
  ByVal wFlags As Long) As Long
@@ -45,9 +45,9 @@ End Enum
 Private Const SPI_GETSCREENSAVERRUNNING As Long = &H72
 
 'ein window zu Xpos, Ypos positionieren
-Public Function MoveWindow(ByVal hWnd As Long, ByVal Xpos As Long, ByVal Ypos As Long)
+Public Function MoveWindow(ByVal hwnd As Long, ByVal Xpos As Long, ByVal Ypos As Long)
     Call SetWindowPos( _
-     hWnd, hWndInsertAfter:=0, x:=Xpos, y:=Ypos, cx:=0, cy:=0, _
+     hwnd, hWndInsertAfter:=0, x:=Xpos, y:=Ypos, cx:=0, cy:=0, _
      wFlags:=SWP_NOSIZE Or SWP_NOZORDER)
 End Function
 
@@ -69,8 +69,8 @@ Public Function GetActiveWindow() As Long
 End Function
 
 'window auf vordergrund setzen, bei hWnd
-Public Function SetForegroundWindow(ByVal hWnd As Long)
-    Call APISetForegroundWindow(hWnd)
+Public Function SetForegroundWindow(ByVal hwnd As Long)
+    Call APISetForegroundWindow(hwnd)
 End Function
 
 'sleep in MS
@@ -187,7 +187,7 @@ Public Function printArray(ByRef aArray, Optional bHoriz As Boolean = False, Opt
             elemStr = "%<Object>%"
         Else
             elemStr = CStr(elem)
-            If Err.Number <> 0 Then
+            If err.Number <> 0 Then
                 elemStr = "%<Error>%"
             End If
         End If
@@ -202,7 +202,7 @@ End Function
 
 'return dimension of array
 Function arrayGetDimension(aArray As Variant) As Integer
-    On Error GoTo Err:
+    On Error GoTo err:
         Dim i As Integer
         Dim tmp As Integer
         i = 0
@@ -210,7 +210,7 @@ Function arrayGetDimension(aArray As Variant) As Integer
             i = i + 1
             tmp = UBound(aArray, i)
         Loop
-Err:
+err:
         arrayGetDimension = i - 1
 End Function
 
@@ -426,7 +426,7 @@ Function makeAssotiativeCollection(arrayValues, arrayKeys)
     
     On Error Resume Next
     For i = LBound(arrayKeys) To UBound(arrayKeys)
-        Call cReturn.add(arrayValues(i), CStr(arrayKeys(i)))
+        Call cReturn.Add(arrayValues(i), CStr(arrayKeys(i)))
     Next i
     
     Set makeAssotiativeCollection = cReturn
@@ -786,7 +786,7 @@ Function arrayToCollection(aArray As Variant) As Collection
     Dim colReturn As New Collection
     Dim wert As Variant
     For Each wert In aArray
-        colReturn.add (wert)
+        colReturn.Add (wert)
     Next wert
     Set arrayToCollection = colReturn
 End Function
@@ -987,31 +987,43 @@ Function min(value1 As Variant, value2 As Variant) As Variant
 End Function
 
 'check if value is in Array, bAnyTypeCompare = true ? then check any Types (modify with Cstr before compare)
-Function isInArray(aArray, vValue, Optional bAnyTypeCompare As Boolean = False, Optional bTrim As Boolean, Optional bNocase As Boolean) As Boolean
+Function isInArray(aArray As Variant, vValue As Variant, Optional bAnyTypeCompare As Boolean = False, Optional bTrim As Boolean, Optional bNocase As Boolean) As Boolean
     Dim value As Variant
+    Dim tmpVal As Variant
     
     isInArray = False
     
     For Each value In aArray
-        ' number 5 = string "5"
-        If bAnyTypeCompare Then
-            vValue = CStr(vValue)
-            value = CStr(value)
-        End If
-        ' " text " = "text"
-        If bTrim Then
-            vValue = Trim(vValue)
-            value = Trim(value)
-        End If
-        ' "TeXt" = "texT"
-        If bNocase Then
-            vValue = LCase(vValue)
-            value = LCase(value)
+        If IsObject(vValue) And IsObject(value) Then
+            If vValue Is value Then
+                isInArray = True
+                Exit Function
+            End If
         End If
         
-        If value = vValue Then
-            isInArray = True
-            Exit For
+        If Not IsObject(vValue) And Not IsObject(value) Then
+            tmpVal = vValue 'dont change vValue
+            ' number 5 = string "5"
+            If bAnyTypeCompare Then
+                tmpVal = CStr(tmpVal)
+                value = CStr(value)
+            End If
+            ' " text " = "text"
+            If bTrim Then
+                tmpVal = Trim(tmpVal)
+                value = Trim(value)
+            End If
+            ' "TeXt" = "texT"
+            If bNocase Then
+                tmpVal = LCase(tmpVal)
+                value = LCase(value)
+            End If
+            
+            If value = tmpVal Then
+                isInArray = True
+                Exit For
+            End If
+            
         End If
     Next value
 End Function
@@ -1134,11 +1146,7 @@ Function DialogGetPath(Optional bFileOrFolder As Boolean = True, Optional sTitle
         
         'falls filter werde vorhanden
         If hatWert(filterTyp) And hatWert(filterExt) Then
-            fd.Filters.add filterTyp, filterExt
-        End If
-        'extra button title
-        If hatWert(sButtonName) Then
-            fd.buttonName = sButtonName
+            fd.Filters.Add filterTyp, filterExt
         End If
     
     'folder
@@ -1158,6 +1166,10 @@ Function DialogGetPath(Optional bFileOrFolder As Boolean = True, Optional sTitle
         fd.Title = sTitle
     End If
     
+    'extra button title
+    If hatWert(sButtonName) Then
+        fd.buttonName = sButtonName
+    End If
     
     
     Dim vrtResult As Variant
@@ -1886,8 +1898,8 @@ Public Function getPath(sPath As String)
     getPath = Left$(sPath, InStrRev(sPath, "\"))
 End Function
 'get filename of sPath path
-Public Function getFileName(sPath As String)
-    getFileName = Mid$(sPath, InStrRev(sPath, "\") + 1)
+Public Function getFilename(sPath As String)
+    getFilename = Mid$(sPath, InStrRev(sPath, "\") + 1)
 End Function
 
 'zeit als string oder Datum in SQL save string modifizieren
@@ -1978,7 +1990,7 @@ Function regEx_getStringMatched(sSearchRegex As String, sContent As String)
     Set objRegex = CreateObject("vbscript.regexp")
     
     With objRegex
-        .ignorecase = True
+        .IgnoreCase = True
         .Pattern = sSearchRegex
         If .test(sContent) Then
             Set objRegM = .Execute(sContent)
@@ -2027,3 +2039,4 @@ Function getDirList(ByVal sFolder As String, _
     
     getDirList = retArray
 End Function
+

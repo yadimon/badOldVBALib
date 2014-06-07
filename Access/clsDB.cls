@@ -11,7 +11,7 @@ Attribute VB_Exposed = False
 ' Module    : clsDB
 ' Author    : Dmitry Gorelenkov
 ' Date      : 08.10.2012
-' Changed   : 01.11.2013
+' Changed   : 07.06.2014
 ' Purpose   : datenbank handler, um connection herzustellen, SQL anweisungen auszufuehren
 ' Requires  : clsErrorHandler, clsFuncs
 ' Info      : Maybe low quality code :/
@@ -28,7 +28,7 @@ Private f As New clsFuncs
 'verbinden, falls connection nicht mehr vorhanden ist
 Public Function connect(Optional CON As ADODB.connection) As Boolean
     connect = False
-    If connection.State > 0 Then
+    If connection.state > 0 Then
         GoTo done:
     End If
     
@@ -84,7 +84,7 @@ Public Function SQL(sBefehl As String, Optional ByVal aParams As Variant, Option
                         par.Size = valueLength
                     End If
 
-                    par.Value = aParams.getValue(sParamPure)
+                    par.value = aParams.getValue(sParamPure)
                     
                 Else
                     Debug.Print "Nicht genug parameters mit mycollection uebergeben. bei clsDB.SQL"
@@ -135,7 +135,7 @@ Public Function SQLValue(sBefehl As String, Optional ByVal aParams As Variant, O
     'falls nicht leer
     If Not isEmptyRS(rs) Then
         rs.MoveFirst
-        SQLValue = rs.Fields(0).Value
+        SQLValue = rs.Fields(0).value
     Else
         SQLValue = vbNullString
     End If
@@ -172,7 +172,7 @@ Public Function SQLArrayOfCol(params As Variant)
     Do Until params.EOF
         Set retMyColTmp = New clsMyCollection
         For Each fld In params.Fields
-            Call retMyColTmp.Add(fld.Value, fld.name)
+            Call retMyColTmp.Add(fld.value, fld.name)
         Next fld
         Call f.arrayPush(retArray, retMyColTmp)
         params.MoveNext
@@ -187,7 +187,9 @@ ErrorHandler:
     ehError.catchErr
 End Function
 
-'aus recordset bzw abfrage ein array machen, array(0)(0) heisst erstes Field aus 1. row
+'aus recordset bzw abfrage ein array machen, array(0)(0) heisst 1. Field aus 1. zeile
+'array(0)(1) heisst 2. Field aus 1. zeile
+'array(0) -> row as array
 'optional array of collections machen array(0).getValue("ID") heisst Field "ID" aus 1. row
 Public Function SQLArray(rs As Variant, Optional bCollection As Boolean = False)
     On Error GoTo ErrorHandler
@@ -217,21 +219,21 @@ Public Function SQLArray(rs As Variant, Optional bCollection As Boolean = False)
     
     rs.MoveFirst
     If bCollection Then 'if need array of collections
-    Dim retMyColTmp As clsMyCollection
+        Dim retMyColTmp As clsMyCollection
         Do Until rs.EOF
             Set retMyColTmp = New clsMyCollection
             For Each fld In rs.Fields
-                Call retMyColTmp.Add(fld.Value, fld.name)
+                Call retMyColTmp.Add(fld.value, fld.name)
             Next fld
             Call f.arrayPush(retArray, retMyColTmp)
             rs.MoveNext
         Loop
     Else 'for simple array
-    Dim retArrayTmp As Variant
+        Dim retArrayTmp As Variant
         Do Until rs.EOF
             retArrayTmp = Array()
             For Each fld In rs.Fields
-                Call f.arrayPush(retArrayTmp, fld.Value)
+                Call f.arrayPush(retArrayTmp, fld.value)
             Next fld
             Call f.arrayPush(retArray, retArrayTmp)
             rs.MoveNext
@@ -282,7 +284,7 @@ Public Function printRs(ByVal rsRS As Variant)
     Do Until rsRS.EOF
         sRes = sRes & "|"
         For Each fld In rsRS.Fields
-            sRes = sRes & fld.Value & "|"
+            sRes = sRes & fld.value & "|"
         Next fld
         sRes = sRes & vbCrLf
         rsRS.MoveNext

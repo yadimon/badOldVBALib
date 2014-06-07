@@ -3,7 +3,7 @@ Attribute VB_Name = "codingHelper"
 ' Module    : codingHelper
 ' Author    : Dmitry Gorelenkov
 ' Date      : 30.01.2013
-' Changed   : 10.04.2013
+' Changed   : 22.12.2013
 ' Purpose   : VBA code erstellen, modifizieren
 ' Requires  : clsFuncs, clsMyCollection, Dmitry :)
 ' Info      : Maybe low quality code :/
@@ -51,7 +51,7 @@ Private Function takeDesignOfForm(Optional sForm As String = "", Optional aOnlyT
     Dim mcPropCol As clsMyCollection
     Dim ctrl As Control    ' Variant 'control
 
-    If sForm = "" Then sForm = Screen.ActiveForm.Name
+    If sForm = "" Then sForm = Screen.ActiveForm.name
     If aOnlyThisProps Is Nothing Then aOnlyThisProps = Array()
     Debug.Assert IsArray(aOnlyThisProps)
 
@@ -59,7 +59,7 @@ Private Function takeDesignOfForm(Optional sForm As String = "", Optional aOnlyT
 
     For Each ctrl In Forms(sForm).Controls
         Set mcPropCol = takeDesignOfControl(ctrl, aOnlyThisProps)
-        Call mcMainCol.Add(mcPropCol, ctrl.Name)
+        Call mcMainCol.Add(mcPropCol, ctrl.name)
     Next ctrl
 
 End Function
@@ -76,9 +76,9 @@ Private Function takeDesignOfControl(Optional ctrl As Control, Optional aOnlyThi
     Debug.Assert IsArray(aOnlyThisProps)
 
     For Each prop In ctrl.Properties
-        If f.isInArray(aOnlyThisProps, prop.Name, True, True, True) Or UBound(aOnlyThisProps) = -1 Then
-            propValue = ModifyByType(prop.Value, prop.Type)
-            Call mcReturnCol.Add(prop.Value, prop.Name)
+        If f.isInArray(aOnlyThisProps, prop.name, True, True, True) Or UBound(aOnlyThisProps) = -1 Then
+            propValue = ModifyByType(prop.value, prop.Type)
+            Call mcReturnCol.Add(prop.value, prop.name)
         End If
     Next prop
 
@@ -138,4 +138,40 @@ End Function
 '    sResult = sToVar & " = Array( _" & vbCrLf & sResult & " _" & vbCrLf & ")"
 '    Debug.Print sResult
 'End Sub
+
+Sub rename_txtctrls_by_source()
+    Dim selectedCtrl As Control
+    Dim selControls As Controls
+    
+    Set selControls = Screen.ActiveForm.Controls
+    For Each selectedCtrl In selControls
+        If selectedCtrl.InSelection Then
+'            Debug.Print selectedCtrl.ControlSource
+           selectedCtrl.name = "txt" & Mid$(selectedCtrl.ControlSource, 4)
+           
+        End If
+    
+        
+    Next selectedCtrl
+End Sub
+
+'TODO
+Sub adjust_selected_controls_horiz()
+    Const horAbstand = 100&
+    Dim currentTop As Long
+    
+    Dim selectedCtrl As Control
+    Dim selControls As Controls
+    
+    Set selControls = Screen.ActiveForm.Controls
+    For Each selectedCtrl In selControls
+        If selectedCtrl.InSelection Then
+'            Debug.Print selectedCtrl.ControlSource
+           selectedCtrl.name = "txt" & Mid$(selectedCtrl.ControlSource, 4)
+           
+        End If
+    
+        
+    Next selectedCtrl
+End Sub
 

@@ -11,7 +11,7 @@ Attribute VB_Exposed = False
 ' Module    : clsFuncsAccs
 ' Author    : Dmitry Gorelenkov
 ' Date      : 08.2012
-' Changed   : 27.09.2013
+' Changed   : 06.06.2014
 ' Purpose   : Funktionssammlung - Access
 ' Requires  : clsFuncs, clsErrorHandler, clsMyCollection
 ' Info      : Maybe low quality code :/
@@ -61,7 +61,33 @@ ErrorHandler:
     ehError.catchErr ("getCtrlsByTag")
 End Function
 
-
+'suchtein control, der den source sSource hat
+Public Function getCtrlBySource(ByRef frmForm As Form, ByVal sSource As String) As Access.Control
+    On Error GoTo ErrorHandler
+    
+    If frmForm Is Nothing Then Exit Function
+    
+    Dim ctrControl As Object ' control
+    Dim prop As Property
+    
+    For Each ctrControl In frmForm.Controls
+        For Each prop In ctrControl.Properties
+            If prop.name = "ControlSource" Then
+                If StrComp(prop.value, sSource, vbTextCompare) = 0 Then
+                    'control gefunden
+                    Set getCtrlBySource = ctrControl
+                    Exit Function
+                End If
+            End If
+        Next prop
+    Next ctrControl
+    
+    Set getCtrlBySource = Nothing
+    
+    Exit Function
+ErrorHandler:
+    ehError.catchErr ("getCtrlBySource")
+End Function
 
 'add tooltip mit steuerelement-inhalten
 Sub addToolTips(frmAktForm As Form)
@@ -71,13 +97,13 @@ Sub addToolTips(frmAktForm As Form)
     For Each ctlInForm In frmAktForm.Controls
       With ctlInForm
         If .ControlType = acTextBox Then
-          .ControlTipText = IIf(IsNull(.Value), "", .Value)
+          .ControlTipText = IIf(IsNull(.value), "", .value)
         ElseIf .ControlType = acComboBox Or _
           .ControlType = acListBox Then
           If .ColumnCount > 1 Then
-            .ControlTipText = IIf(IsNull(.Value), "", .Column(.BoundColumn))
+            .ControlTipText = IIf(IsNull(.value), "", .Column(.BoundColumn))
           Else
-            .ControlTipText = IIf(IsNull(.Value), "", .Value)
+            .ControlTipText = IIf(IsNull(.value), "", .value)
           End If
         End If
       End With
@@ -94,7 +120,7 @@ Public Function setDefaultFormValues(ByRef frmForm As Variant)
         Select Case ctl.ControlType
             Case acComboBox, acListBox, acOptionGroup, acTextBox, acCheckBox    ' add other types if necessary
                 If Not ctl.Locked Then
-                    ctl.Value = quotTrim(ctl.DefaultValue)
+                    ctl.value = quotTrim(ctl.DefaultValue)
                 End If
         End Select
     Next
@@ -125,7 +151,7 @@ Public Function modifyAllPossible(ByRef frmForm As Variant, sWhatToModify As Str
     For Each ctl In frmForm
         Select Case LCase(sWhatToModify)
             Case "value"
-                ctl.Value = ""
+                ctl.value = ""
 
             Case "controlsource"
                 ctl.ControlSource = ""
@@ -167,7 +193,7 @@ Public Function setListIndex(ByRef ctlList As Variant, index As Integer) As Bool
             End If
             
             'sonst mit ItemData versuchen
-            .Value = .itemData(index)
+            .value = .itemData(index)
             setListIndex = True
         End If
     End With
@@ -266,25 +292,25 @@ End Function
 
 'datenbank pfad fuer alle (bzw mit bestimmten prefix) verknuepfte tabellen aendern
 Public Function changeSourceDB(sPath As String, Optional sTblPrefix As String = vbNullString) As Integer
-    Dim db As Database
+    Dim DB As Database
     Dim sPrefLen As String
     Dim i As Integer
     
     On Error GoTo ErrorHandler
     
-    Set db = CurrentDb()
+    Set DB = CurrentDb()
     changeSourceDB = 0
     
     
     
     sPrefLen = Len(sTblPrefix)
     
-    For i = 0 To db.TableDefs.Count - 1
-        If db.TableDefs(i).Attributes = dbAttachedTable Then '.connect <> ""
-            If Left(db.TableDefs(i).name, sPrefLen) = sTblPrefix Then
-                If Mid(db.TableDefs(i).connect, 11) <> sPath Then
-                    db.TableDefs(i).connect = ";database=" & sPath
-                    db.TableDefs(i).RefreshLink
+    For i = 0 To DB.TableDefs.Count - 1
+        If DB.TableDefs(i).Attributes = dbAttachedTable Then '.connect <> ""
+            If Left(DB.TableDefs(i).name, sPrefLen) = sTblPrefix Then
+                If Mid(DB.TableDefs(i).connect, 11) <> sPath Then
+                    DB.TableDefs(i).connect = ";database=" & sPath
+                    DB.TableDefs(i).RefreshLink
                     changeSourceDB = 1 'set changed
                 End If
             End If
@@ -322,22 +348,22 @@ End Function
 
 'get DBpath of all attached tables
 Public Function getBackEndPath(Optional dbDatabase As Database) As String
-    Dim db As Database
+    Dim DB As Database
     Dim i As Integer
     Dim sFoundPath As String
 
 
     If Not DEBUGMODE Then On Error GoTo getBackEndPath_Error
 
-    If dbDatabase Is Nothing Then Set db = CurrentDb()
+    If dbDatabase Is Nothing Then Set DB = CurrentDb()
 
-    For i = 0 To db.TableDefs.Count - 1
-        If db.TableDefs(i).Attributes = dbAttachedTable Then
+    For i = 0 To DB.TableDefs.Count - 1
+        If DB.TableDefs(i).Attributes = dbAttachedTable Then
             If sFoundPath = "" Then
-                sFoundPath = Mid(db.TableDefs(i).connect, 11)
+                sFoundPath = Mid(DB.TableDefs(i).connect, 11)
             End If
             'falls andere path gefunden, error, return 0
-            If Mid(db.TableDefs(i).connect, 11) <> sFoundPath Then
+            If Mid(DB.TableDefs(i).connect, 11) <> sFoundPath Then
                 getBackEndPath = "0"
             End If
         End If
@@ -359,16 +385,16 @@ End Function
 'prueft alle verknuepfte mit BackEnd Tabellen, ob die BackEnd DB zugreifbar ist
 'sehr langsam!!!
 Public Function checkDBTblLinks(Optional dbDatabase As Database) As Boolean
-    Dim db As Database
+    Dim DB As Database
     Dim i As Integer
     
     On Error GoTo checkTblLinks_Error
 
-    If dbDatabase Is Nothing Then Set db = CurrentDb()
+    If dbDatabase Is Nothing Then Set DB = CurrentDb()
     
-    For i = 0 To db.TableDefs.Count - 1
-        If db.TableDefs(i).Attributes = dbAttachedTable Then
-            db.TableDefs(i).RefreshLink
+    For i = 0 To DB.TableDefs.Count - 1
+        If DB.TableDefs(i).Attributes = dbAttachedTable Then
+            DB.TableDefs(i).RefreshLink
         End If
     Next i
     
@@ -390,10 +416,10 @@ End Function
 Public Function tableExists(mytable As String) As Boolean
     On Error GoTo Fehlerbehandlung
     Dim td As DAO.TableDef
-    Dim db As Database
-    Set db = CurrentDb
+    Dim DB As Database
+    Set DB = CurrentDb
     
-    Set td = db.TableDefs(mytable)
+    Set td = DB.TableDefs(mytable)
     tableExists = True
     Exit Function
 Fehlerbehandlung:
@@ -405,14 +431,14 @@ End Function
 Public Function columnExists(sTable As String, sColName As String)
     Dim tdf As DAO.TableDef
     Dim fld As DAO.Field
-    Dim db As Database
-    Set db = CurrentDb
+    Dim DB As Database
+    Set DB = CurrentDb
     
     
     'Fehlerbehandlung abschalten
     On Error Resume Next
     
-    Set tdf = db.TableDefs(sTable)
+    Set tdf = DB.TableDefs(sTable)
 
     
     columnExists = True
@@ -467,7 +493,7 @@ Public Function Recordset2Excel(ByRef rstData As Object, _
                 strRstDataColsName(i) = .Fields(i).name
             Next i
             xlSheet.range(xlSheet.Cells(StartRowNr, StartColNr), _
-                          xlSheet.Cells(StartRowNr, StartColNr + lngRstDataCols - 1)).Value = strRstDataColsName
+                          xlSheet.Cells(StartRowNr, StartColNr + lngRstDataCols - 1)).value = strRstDataColsName
             StartRowNr = StartRowNr + 1
         End With
     End If
@@ -525,7 +551,7 @@ Function formReload(sFormName As String, Optional sByWhatField As String = "0", 
         
         'key spalte speichern
         On Error Resume Next 'falls gelöscht oder sonst irgendwas, ignorieren
-        sFieldData = f.ifNoValue(.Recordset.Fields(sByWhatField).Value, "")
+        sFieldData = f.ifNoValue(.Recordset.Fields(sByWhatField).value, "")
         .Requery
         'zu id springen, falls moeglich
         Call formMoveToRecord(Forms(sFormName), sByWhatField & " = " & sFieldData)

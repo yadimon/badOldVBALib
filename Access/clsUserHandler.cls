@@ -11,7 +11,7 @@ Attribute VB_Exposed = False
 ' Module    : clsUserHandler
 ' Author    : Dmitry Gorelenkov
 ' Date      : 27.01.2013
-' Changed   : 11.11.2013
+' Changed   : 07.05.2014
 ' Purpose   : Benutzerverwaltung
 ' Requires  : dazugehoeriges dialog fuer login, clsDB, clsFuncsAccs,  ISettingsHandler - > clsUserSettingsHandler
 ' Info      : Maybe low quality code :/
@@ -46,6 +46,7 @@ Private m_sLoginFormName As String
 Private m_shUserSettingsHandler As ISettingsHandler
 Private m_ushUserSettingsHandler As clsUserSettingsHandler
 Private m_bAllowCloseForm As Boolean
+Private m_bTerminate As Boolean
 
 ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ':::::::::::::::::::::::::::EVENTS::::::::::::::::::::::::::::::::::::
@@ -116,6 +117,8 @@ Public Function init(Optional tblUsersInGroup As String, Optional tblGroups As S
     m_stblSettings = IIf(tblGroupSettings = "", "tblLoginSettings", tblSettings)
     
     m_bAllowCloseForm = False
+    m_bTerminate = False
+    
     
     m_bInit_done = True
     
@@ -205,10 +208,10 @@ Public Function setCurrentUser(sUserName As String)
                                 "FROM tblLoginGroups as g LEFT JOIN (SELECT * FROM tblLoginUsers as u LEFT JOIN tblLoginUsersInGroups as ug ON u.usrID = ug.usringrpUserIDRef) as t ON g.grpID = t.usringrpGroupRef " & _
                                 "WHERE u.usrLogin=""" & sUserName & """")
                                 
-        tCurrentUserID = CLng(Nz(rsAllInfo.Fields(1).Value, -1))
-        tCurrentUserGroup = Nz(rsAllInfo.Fields(3).Value, "")
-        tCurrentUserGroupID = CLng(Nz(rsAllInfo.Fields(2).Value, -1))
-        tCurrentUserLvl = CLng(Nz(rsAllInfo.Fields(4).Value, -1))
+        tCurrentUserID = CLng(Nz(rsAllInfo.Fields(1).value, -1))
+        tCurrentUserGroup = Nz(rsAllInfo.Fields(3).value, "")
+        tCurrentUserGroupID = CLng(Nz(rsAllInfo.Fields(2).value, -1))
+        tCurrentUserLvl = CLng(Nz(rsAllInfo.Fields(4).value, -1))
         
     'sonst daten loeschen
     Else
@@ -323,7 +326,7 @@ Private Sub Class_Terminate()
 '    Set m_stblGroupSettings = Nothing
 '    Set m_stblSettings = Nothing
     On Error Resume Next
-    
+    m_bTerminate = True
     closeLoginForm
     
     unbindControlVars
@@ -364,6 +367,7 @@ End Sub
 'loginform schliessen
 Public Sub closeLoginForm()
     m_bAllowCloseForm = True
+    m_bTerminate = True
     
     If Not m_frmLoginDlg Is Nothing Then
         m_frmLoginDlg.Visible = False
@@ -404,7 +408,7 @@ Private Sub showLoginForm()
     End If
     
     
-    While Not m_frmLoginDlg Is Nothing
+    While Not m_frmLoginDlg Is Nothing And m_bTerminate = False
 '        If m_frmLoginDlg.name <> Screen.ActiveForm.name Then
             m_frmLoginDlg.SetFocus
 '        End If
@@ -416,7 +420,7 @@ End Sub
 
 'Fehler in Loginform anzeigen
 Private Function loginFormPrintError(sError As String)
-    m_frmLoginDlg.txtErrorOut.Value = sError
+    m_frmLoginDlg.txtErrorOut.value = sError
 End Function
 
 Private Sub m_frmLoginDlg_Unload(Cancel As Integer)
@@ -429,5 +433,4 @@ End Sub
 Private Sub m_btnCancel_Click()
     RaiseEvent cancelLogin
 End Sub
-
 

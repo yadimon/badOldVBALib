@@ -11,9 +11,10 @@ Attribute VB_Exposed = False
 ' Module    : clsEasyPwInput
 ' Author    : Dmitry Gorelenkov
 ' Date      : 12.03.2013
-' Changed   : 17.04.2013
+' Changed   : 23.12.2013
 ' Purpose   : Asking Password..
 ' Requires  : clsFuncs, Form with password fields.
+'           : element names in form: txtInput, btnOK, btnCancel
 ' Info      : Maybe low quality code :/
 '---------------------------------------------------------------------------------------
 
@@ -22,7 +23,9 @@ Option Explicit
 
 Private m_formName As String
 Private WithEvents m_frmPwInput As Access.Form 'form to show
+Attribute m_frmPwInput.VB_VarHelpID = -1
 Private WithEvents m_cmdConfirm As Access.CommandButton 'ok button
+Attribute m_cmdConfirm.VB_VarHelpID = -1
 Private WithEvents m_cmdCancel As Access.CommandButton 'cancel button
 Attribute m_cmdCancel.VB_VarHelpID = -1
 Private m_sInput As String 'input pw
@@ -40,6 +43,9 @@ Public Function askPassword(Optional sFormCaption As String = "Bitte Passwort ei
     Set m_cmdCancel = m_frmPwInput.btnCancel
     m_cmdCancel.OnClick = "[Event Procedure]"
     
+    'set focus on input field
+    m_frmPwInput.txtInput.SetFocus
+    
     'wait for input
     While Not m_frmPwInput Is Nothing
         DoEvents
@@ -51,7 +57,7 @@ Public Function askPassword(Optional sFormCaption As String = "Bitte Passwort ei
 End Function
 'OK button click event
 Private Sub m_cmdConfirm_Click()
-    m_sInput = Nz(m_frmPwInput.txtInput.Value, "")
+    m_sInput = Nz(m_frmPwInput.txtInput.value, "")
     closeForm
 End Sub
 
@@ -67,7 +73,7 @@ End Sub
 
 Private Sub closeForm()
     If Not m_frmPwInput Is Nothing Then
-        m_frmPwInput.txtInput.Value = ""
+        m_frmPwInput.txtInput.value = ""
         m_frmPwInput.Visible = False
         Set m_frmPwInput = Nothing
     End If
