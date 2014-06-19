@@ -11,7 +11,7 @@ Attribute VB_Exposed = False
 ' Module    : clsFuncsAccs
 ' Author    : Dmitry Gorelenkov
 ' Date      : 08.2012
-' Changed   : 06.06.2014
+' Changed   : 19.06.2014
 ' Purpose   : Funktionssammlung - Access
 ' Requires  : clsFuncs, clsErrorHandler, clsMyCollection
 ' Info      : Maybe low quality code :/
@@ -413,11 +413,12 @@ End Function
 
 'prueft ob eine tabelle existiert
 'from http://www.office-loesung.de/ftopic1371_0_0_asc.php
-Public Function tableExists(mytable As String) As Boolean
+Public Function tableExists(mytable As String, Optional DB As Database) As Boolean
     On Error GoTo Fehlerbehandlung
     Dim td As DAO.TableDef
-    Dim DB As Database
-    Set DB = CurrentDb
+    If DB Is Nothing Then
+        Set DB = CurrentDb
+    End If
     
     Set td = DB.TableDefs(mytable)
     tableExists = True
