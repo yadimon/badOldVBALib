@@ -1131,7 +1131,7 @@ End Function
 'Dim vMitte As Variant
 'Dim i As Long, j As Long
 '    '
-'    ' Abbruchbedingung der Rekursion prüfen
+'    ' Abbruchbedingung der Rekursion pruefen
 '    '
 '    If MinElem > MaxElem Then
 '        '
@@ -1145,20 +1145,20 @@ End Function
 '    Mitte = (MinElem + MaxElem) \ 2
 '    vMitte = sArray(Mitte)
 '    '
-'    ' Für die Prüfung der linken und rechten
-'    ' Seite die Zähler initialisieren
+'    ' Fuer die Pruefung der linken und rechten
+'    ' Seite die Zaehler initialisieren
 '    '
 '    i = MinElem
 '    j = MaxElem
 '    Do
 '        '
-'        ' Von links bis zur Mitte prüfen
+'        ' Von links bis zur Mitte pruefen
 '        '
 '        Do While sArray(i) < vMitte
 '            i = i + 1
 '        Loop
 '        '
-'        ' Von rechts bis zur Mitte prüfen
+'        ' Von rechts bis zur Mitte pruefen
 '        '
 '        Do While sArray(j) > vMitte
 '            j = j - 1
@@ -1173,7 +1173,7 @@ End Function
 '            sArray(j) = sArray(i)
 '            sArray(i) = vDummy
 '            '
-'            ' Prüfung bei der nächsten Position fortsetzen
+'            ' Pruefung bei der naechsten Position fortsetzen
 '            '
 '            i = i + 1
 '            j = j - 1
@@ -1205,7 +1205,7 @@ End Function
 'Dim vMitte As Variant
 'Dim i As Long, j As Long
 '    '
-'    ' Abbruchbedingung der Rekursion prüfen
+'    ' Abbruchbedingung der Rekursion pruefen
 '    '
 '    If MinElem > MaxElem Then
 '        '
@@ -1219,20 +1219,20 @@ End Function
 '    Mitte = (MinElem + MaxElem) \ 2
 '    vMitte = sArray(Mitte, 0)
 '    '
-'    ' Für die Prüfung der linken und rechten
-'    ' Seite die Zähler initialisieren
+'    ' Fuer die Pruefung der linken und rechten
+'    ' Seite die Zaehler initialisieren
 '    '
 '    i = MinElem
 '    j = MaxElem
 '    Do
 '        '
-'        ' Von links bis zur Mitte prüfen
+'        ' Von links bis zur Mitte pruefen
 '        '
 '        Do While sArray(i, 0) < vMitte
 '            i = i + 1
 '        Loop
 '        '
-'        ' Von rechts bis zur Mitte prüfen
+'        ' Von rechts bis zur Mitte pruefen
 '        '
 '        Do While sArray(j, 0) > vMitte
 '            j = j - 1
@@ -1250,7 +1250,7 @@ End Function
 '            sArray(i, 0) = vDummy
 '            sArray(i, 1) = vDummy2
 '            '
-'            ' Prüfung bei der nächsten Position fortsetzen
+'            ' Pruefung bei der naechsten Position fortsetzen
 '            '
 '            i = i + 1
 '            j = j - 1
@@ -1504,6 +1504,61 @@ Function myCollectionToRange(ByRef mcCollection As clsMyCollection, ByRef rngKey
     Next i
     
     myCollectionToRange = True
+End Function
+Public Function ExportCSV(sDestFile As String, rngToExport As Range, Optional sTrennzeichen As String = ";", Optional sWrapSymbol As String = """")
+' Alle Variablen dimensionieren.
+    Dim FileNum As Integer
+    Dim ColumnCount As Integer
+    Dim RowCount As Integer
+
+    ' Naechste freie Dateihandle-Nr. besorgen.
+    FileNum = FreeFile()
+
+    ' Fehlerpruefung deaktivieren.
+    On Error Resume Next
+
+    ' Versuchen, Zieldatei fuer Ausgabe zu oeffnen.
+    Open sDestFile For Output As #FileNum
+
+    ' Ggf. Fehler zurueckmelden und beenden.
+    If Err <> 0 Then
+        MsgBox "Datei kann nicht geoeffnet werden" & sDestFile
+        End
+    End If
+
+    ' Fehlerpruefung aktivieren.
+    On Error GoTo 0
+
+    ' Jede Zeile in der Range durchlaufen.
+    For RowCount = 1 To rngToExport.Rows.count
+
+        ' Jede Spalte in der Range durchlaufen.
+        For ColumnCount = 1 To rngToExport.Columns.count
+            If Len(sWrapSymbol) <> 0 Then
+                ' Text der aktuellen Zelle m. sWrapSymbol in Datei schreiben.
+                Print #FileNum, _
+                      sWrapSymbol & _
+                      rngToExport.Cells(RowCount, ColumnCount).Text & _
+                      sWrapSymbol;
+            Else
+                Print #FileNum, rngToExport.Cells(RowCount, ColumnCount).Text
+            End If
+
+            ' Pruefen, ob Zelle sich in der letzten Spalte befindet.
+            If ColumnCount = rngToExport.Columns.count Then
+                ' Wenn ja, Leerzeile schreiben.
+                Print #FileNum,
+            Else
+                ' Sonst Trennzeichen ausgeben
+                Print #FileNum, sTrennzeichen;
+            End If
+            ' Naechste Iteration der ColumnCount-Schleife starten.
+        Next ColumnCount
+        ' Naechste Iteration der RowCount-Schleife starten.
+    Next RowCount
+
+    ' Zieldatei schliessen.
+    Close #FileNum
 End Function
 
 Private Sub Class_Initialize()
