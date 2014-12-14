@@ -1505,12 +1505,13 @@ Function myCollectionToRange(ByRef mcCollection As clsMyCollection, ByRef rngKey
     
     myCollectionToRange = True
 End Function
+
 Public Function ExportCSV(sDestFile As String, rngToExport As Range, Optional sTrennzeichen As String = ";", Optional sWrapSymbol As String = """")
 ' Alle Variablen dimensionieren.
     Dim FileNum As Integer
     Dim ColumnCount As Integer
     Dim RowCount As Integer
-
+    Dim sValue As String
     ' Naechste freie Dateihandle-Nr. besorgen.
     FileNum = FreeFile()
 
@@ -1534,20 +1535,21 @@ Public Function ExportCSV(sDestFile As String, rngToExport As Range, Optional sT
 
         ' Jede Spalte in der Range durchlaufen.
         For ColumnCount = 1 To rngToExport.Columns.count
+            'get value of cell
             If Len(sWrapSymbol) <> 0 Then
-                ' Text der aktuellen Zelle m. sWrapSymbol in Datei schreiben.
-                Print #FileNum, _
-                      sWrapSymbol & _
-                      rngToExport.Cells(RowCount, ColumnCount).Text & _
-                      sWrapSymbol;
+                sValue = rngToExport.Cells(RowCount, ColumnCount).Text
+                sValue = Replace(sValue, sWrapSymbol, "''") 'bad solution, but better than nothing. Replace wrpaSymbol in values with two quotes
+                sValue = sWrapSymbol & sValue & sWrapSymbol 'append wrap symbol
             Else
-                Print #FileNum, rngToExport.Cells(RowCount, ColumnCount).Text
+                sValue = rngToExport.Cells(RowCount, ColumnCount).Text
             End If
+            
+            Print #FileNum, sValue;
 
             ' Pruefen, ob Zelle sich in der letzten Spalte befindet.
             If ColumnCount = rngToExport.Columns.count Then
                 ' Wenn ja, Leerzeile schreiben.
-                Print #FileNum,
+                Print #FileNum, vbCrLf;
             Else
                 ' Sonst Trennzeichen ausgeben
                 Print #FileNum, sTrennzeichen;
@@ -1560,6 +1562,7 @@ Public Function ExportCSV(sDestFile As String, rngToExport As Range, Optional sT
     ' Zieldatei schliessen.
     Close #FileNum
 End Function
+
 
 Private Sub Class_Initialize()
     Set f = New clsFuncs
